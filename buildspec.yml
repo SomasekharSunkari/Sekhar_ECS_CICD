@@ -1,0 +1,30 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+    commands:
+      - echo Installing dependencies...
+      - aws --version
+      - docker --version
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - export AWS_REGION=us-east-1
+      - export ECR_REPOSITORY=sekhar/ecscicd
+      - export IMAGE_TAG=latest
+      - $(aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 975050220365.dkr.ecr.us-east-1.amazonaws.com)
+  build:
+    commands:
+      - echo Building the Docker image...
+      - docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+      - docker tag $ECR_REPOSITORY:$IMAGE_TAG 975050220365.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Pushing the Docker image to ECR...
+      - docker push 975050220365.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+
+artifacts:
+  files:
+    - "**/*"
+  discard-paths: yes
